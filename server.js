@@ -21,7 +21,7 @@ app.use('/cart',apiCart)
 app.use('/favourite',apiFavourite)
 app.use('/invoice',apiInvoice)
 app.use('/invoicedetail',apiInvoiceDetail)
-app.use('/pament',apiPayment)
+app.use('/payment',apiPayment)
 app.use('/product',apiProduct)
 app.use('/review',apiReview)
 
