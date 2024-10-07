@@ -1,17 +1,16 @@
 const mongoose = require("mongoose");
 
-const CartModel = new mongoose.Schema(
+const Cart = new mongoose.Schema(
   {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
-      required: true,
+    userEmail: {
+      type: String,
+      required: true,  // Email người dùng từ Firebase
     },
-    products: [ // Sửa từ items thành products
+    products: [
       {
         product: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "product",
+          ref: "product",  // Liên kết với sản phẩm
           required: true,
         },
         quantity: {
@@ -38,4 +37,4 @@ const CartModel = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('cart',CartModel)
+module.exports = mongoose.model('cart', Cart);
