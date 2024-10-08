@@ -8,17 +8,16 @@ router.get("/", (req, res) => {
   res.send("Vào API Cart");
 });
 
-// Lấy danh sách giỏ hàng theo email người dùng
+// Lấy danh sách giỏ hàng theo tên người dùng
 router.get("/get-list-cart", async (req, res) => {
   try {
-    const { userEmail } = req.query;  // Lấy email người dùng từ query params
+    const { userName } = req.query; // Lấy userName từ query params
 
-    if (!userEmail) {
-      return res.status(400).json({ message: "Email không hợp lệ" });
+    if (!userName) {
+      return res.status(400).json({ message: "Tên không hợp lệ" });
     }
 
-    // Tìm giỏ hàng theo email và populate thông tin sản phẩm chi tiết
-    const cart = await Cart.findOne({ userEmail }).populate({
+    const cart = await Cart.findOne({ userName }).populate({
       path: "products.product",
       select: "name price image",
     });
@@ -27,7 +26,6 @@ router.get("/get-list-cart", async (req, res) => {
       return res.status(404).json({ message: "Giỏ hàng trống" });
     }
 
-    // Trả về danh sách giỏ hàng
     return res.json({
       status: 200,
       msg: "Danh sách giỏ hàng",
@@ -43,37 +41,30 @@ router.get("/get-list-cart", async (req, res) => {
   }
 });
 
-// Thêm sản phẩm vào giỏ hàng theo email người dùng từ Firebase Auth
+// Thêm sản phẩm vào giỏ hàng
 router.post("/add-to-cart", async (req, res) => {
   try {
-    // Lấy email và thông tin sản phẩm từ body request
-    const { userEmail, productId, quantity } = req.body;
+    const { userName, productId, quantity } = req.body; // Lấy userName từ body
 
-    // Kiểm tra xem email người dùng có được cung cấp không
-    if (!userEmail) {
-      return res.status(400).json({ message: "Email người dùng là bắt buộc" });
+    if (!userName) {
+      return res.status(400).json({ message: "Tên người dùng là bắt buộc" });
     }
 
-    // Kiểm tra xem sản phẩm có tồn tại không
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ message: "Sản phẩm không tồn tại" });
     }
 
-    // Tìm giỏ hàng của người dùng theo email hoặc tạo mới nếu chưa có
-    let cart = await Cart.findOne({ userEmail });
+    let cart = await Cart.findOne({ userName });
     if (!cart) {
-      cart = new Cart({ userEmail, products: [] });
+      cart = new Cart({ userName, products: [] }); // Tạo mới giỏ hàng nếu chưa tồn tại
     }
 
-    // Kiểm tra sản phẩm có trong giỏ hàng chưa
     const productIndex = cart.products.findIndex((p) => p.product.equals(product._id));
 
     if (productIndex > -1) {
-      // Nếu sản phẩm đã có trong giỏ hàng, tăng số lượng
-      cart.products[productIndex].quantity += quantity;
+      cart.products[productIndex].quantity += quantity; // Cập nhật số lượng nếu sản phẩm đã có
     } else {
-      // Nếu sản phẩm chưa có, thêm sản phẩm mới vào giỏ hàng
       cart.products.push({
         product: product._id,
         quantity: quantity,
@@ -83,10 +74,8 @@ router.post("/add-to-cart", async (req, res) => {
       });
     }
 
-    // Lưu giỏ hàng sau khi cập nhật
     await cart.save();
 
-    // Trả về phản hồi khi thêm sản phẩm thành công
     res.json({
       status: 200,
       msg: "Sản phẩm đã được thêm vào giỏ hàng",
@@ -94,6 +83,51 @@ router.post("/add-to-cart", async (req, res) => {
     });
   } catch (error) {
     console.log("add-to-cart error:", error);
+    res.status(500).json({
+      status: 500,
+      message: "Lỗi server",
+      data: [],
+    });
+  }
+});
+
+// Xóa sản phẩm khỏi giỏ hàng theo tên người dùng và productId
+router.delete("/remove-from-cart", async (req, res) => {
+  try {
+    const { userName, productId } = req.query; // Lấy userName từ query params
+
+    if (!userName) {
+      return res.status(400).json({ message: "Tên không hợp lệ" });
+    }
+
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID không hợp lệ" });
+    }
+
+    // Tìm giỏ hàng của người dùng
+    const cart = await Cart.findOne({ userName });
+    if (!cart) {
+      return res.status(404).json({ message: "Giỏ hàng trống" });
+    }
+
+    // Tìm sản phẩm trong giỏ hàng và xóa nó
+    const productIndex = cart.products.findIndex((p) => p.product.equals(productId));
+    if (productIndex > -1) {
+      cart.products.splice(productIndex, 1); // Xóa sản phẩm
+    } else {
+      return res.status(404).json({ message: "Sản phẩm không có trong giỏ hàng" });
+    }
+
+    // Lưu lại giỏ hàng sau khi xóa sản phẩm
+    await cart.save();
+
+    res.json({
+      status: 200,
+      msg: "Sản phẩm đã được xóa khỏi giỏ hàng",
+      data: cart,
+    });
+  } catch (error) {
+    console.log("remove-from-cart error:", error);
     res.status(500).json({
       status: 500,
       message: "Lỗi server",
