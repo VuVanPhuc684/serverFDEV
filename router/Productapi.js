@@ -7,7 +7,7 @@ router.get("/", (rq, rs) => {
   rs.send("Vao API Product");
 });
 
-// Lấy danh sách các sản phẩm giày
+// Lấy danh sách các sản phẩm 
 router.get("/get-list-Product", async (req, res) => {
   try {
     const data = await Product.find();
