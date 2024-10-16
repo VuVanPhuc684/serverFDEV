@@ -8,6 +8,7 @@ router.get("/", (req, res) => {
   res.send("Vào API Cart");
 });
 
+// Lấy danh sách giỏ hàng
 router.get("/get-list-cart", async (req, res) => {
   const { userName } = req.query;
   if (!userName) {
@@ -36,6 +37,7 @@ router.get("/get-list-cart", async (req, res) => {
   }
 });
 
+// Thêm sản phẩm vào giỏ hàng
 router.post("/add-to-cart", async (req, res) => {
   const { userName, productId, quantity } = req.body;
   if (!userName) {
@@ -78,24 +80,29 @@ router.post("/add-to-cart", async (req, res) => {
   }
 });
 
-// Xóa sản phẩm từ giỏ hàng với RESTful route
-router.delete("/remove-from-cart/:userName/:productId", async (req, res) => {
-  const { userName, productId } = req.params;
-  if (!userName || !productId) {
-    return res.status(400).json({ message: "Missing userName or productId" });
+// Xóa sản phẩm khỏi giỏ hàng theo tên sản phẩm
+router.delete("/remove-from-cart/:userName/:productName", async (req, res) => {
+  const { userName, productName } = req.params;
+  if (!userName || !productName) {
+    return res.status(400).json({ message: "Missing userName or productName" });
   }
   try {
     const cart = await Cart.findOne({ userName });
     if (!cart) {
       return res.status(404).json({ message: "Cart not found" });
     }
-    const productObjectId = mongoose.Types.ObjectId(productId);
-    const updatedProducts = cart.products.filter(p => !p.product.equals(productObjectId));
+
+    // Lọc sản phẩm theo tên
+    const updatedProducts = cart.products.filter(p => p.name !== productName);
+    
     if (updatedProducts.length === cart.products.length) {
       return res.status(404).json({ message: "Product not found in cart" });
     }
+
+    // Cập nhật giỏ hàng
     cart.products = updatedProducts;
     await cart.save();
+
     res.status(200).json({
       status: 200,
       message: "Product removed successfully",
@@ -107,6 +114,4 @@ router.delete("/remove-from-cart/:userName/:productId", async (req, res) => {
   }
 });
 
-
 module.exports = router;
-
