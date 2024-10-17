@@ -1,239 +1,88 @@
-// var express = require("express");
-// var router = express.Router();
-
-// const Review = require("../model/Review");
-
-// router.get("/", (req, res) => {
-//   res.send("Vào API Review");
-// });
-
-// // Lấy danh sách tất cả các review
-// router.get("/get-list-Review", async (req, res) => {
-//   try {
-//     const data = await Review.find();
-//     console.log(data);
-//     res.json(data); // Trả về dữ liệu dưới dạng JSON
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({
-//       status: 500,
-//       message: "Internal Server Error",
-//       data: [],
-//     });
-//   }
-// });
-
-// // Lấy review theo productId
-// router.get("/get-reviews/:productId", async (req, res) => {
-//   const { productId } = req.params;
-//   try {
-//     const reviews = await Review.find({ productId });
-//     if (reviews.length === 0) {
-//       return res.status(404).json({ message: "Không có review cho sản phẩm này." });
-//     }
-//     res.status(200).json(reviews);
-//   } catch (error) {
-//     res.status(500).json({
-//       status: 500,
-//       message: "Internal Server Error",
-//     });
-//   }
-// });
-
-
-// // Thêm review mới
-// router.post("/add-review", async (req, res) => {
-//   const { productId, userId, rate, comment } = req.body;
-
-//   try {
-//     const newReview = new Review({
-//       productId,
-//       userId,
-//       rate,
-//       comment,
-//     });
-
-//     const savedReview = await newReview.save();
-//     const responseReview = {
-//       _id: savedReview._id,
-//       productId: savedReview.productId,
-//       userId: savedReview.userId,
-//       rate: savedReview.rate,
-//       comment: savedReview.comment,
-//       time: savedReview.time,
-//       createdAt: savedReview.createdAt,
-//       updatedAt: savedReview.updatedAt,
-//     };
-
-//     res.status(201).json(responseReview);
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ message: "Có lỗi xảy ra khi thêm review." });
-//   }
-// });
-
-
-// // Cập nhật review
-// router.put("/update-review/:id", async (req, res) => {
-//   const { id } = req.params;
-//   const { rate, comment } = req.body;
-
-//   try {
-//     const updatedReview = await Review.findByIdAndUpdate(id, { rate, comment }, { new: true });
-//     if (!updatedReview) {
-//       return res.status(404).json({ message: "Không tìm thấy review để cập nhật." });
-//     }
-//     res.status(200).json(updatedReview);
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ message: "Có lỗi xảy ra khi cập nhật review." });
-//   }
-// });
-
-// // Xóa review
-// router.delete("/delete-review/:id", async (req, res) => {
-//   const { id } = req.params;
-
-//   try {
-//     const deletedReview = await Review.findByIdAndDelete(id);
-//     if (!deletedReview) {
-//       return res.status(404).json({ message: "Không tìm thấy review để xóa." });
-//     }
-//     res.status(200).json({ message: "Review đã được xóa." });
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ message: "Có lỗi xảy ra khi xóa review." });
-//   }
-// });
-
-// module.exports = router;
-
-
-
-
-
 const express = require("express");
 const router = express.Router();
-const Review = require("../model/Review");
-const Product = require("../model/Product");
+const Review = require("../model/Review"); // Đảm bảo đường dẫn đúng
+const Product = require("../model/Product"); // Đảm bảo đường dẫn đúng
 
-// Hàm định dạng chỉ lấy giờ và ngày
-const formatTime = () => {
-  const currentDate = new Date();
-  return currentDate.toLocaleString("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-};
-
+// Route to check API status
 router.get("/", (req, res) => {
-  res.send("Vào API Review");
+  res.send("Review API is running");
 });
 
-// Lấy danh sách tất cả các review
-router.get("/get-list-review", async (req, res) => {
-  try {
-    const data = await Review.find();
-    res.json(data);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      status: 500,
-      message: "Internal Server Error",
-      data: [],
-    });
-  }
-});
-
-// Lấy review theo productId
+// Fetch all reviews for a specific product, including product details
 router.get("/get-reviews/:productId", async (req, res) => {
   const { productId } = req.params;
   try {
-    const reviews = await Review.find({ productId });
-    if (reviews.length === 0) {
-      return res.status(404).json({ message: "Không có review cho sản phẩm này." });
+    const reviews = await Review.find({ productId }).populate('productId', 'name price description');
+    if (!reviews.length) {
+      return res.status(404).json({ message: "No reviews found for this product." });
     }
-    res.status(200).json(reviews);
+    const response = reviews.map(review => ({
+      userName: review.userName,
+      comment: review.comment,
+      rating: review.rating,
+      createdAt: review.createdAt,
+      productDetails: {
+        name: review.productId.name,
+        price: review.productId.price,
+        description: review.productId.description
+      }
+    }));
+    res.json(response);
   } catch (error) {
-    res.status(500).json({
-      status: 500,
-      message: "Internal Server Error",
-    });
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
-// Thêm review mới
+
+// Add a new review
 router.post("/add-review", async (req, res) => {
-  const { productId, userId, rate, comment } = req.body;
-
+  const { productId, userName, comment, rating } = req.body;
   try {
-    if (rate < 0 || rate > 5) {
-      return res.status(400).json({ message: "Số sao phải nằm trong khoảng từ 0 đến 5." });
-    }
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ message: "Sản phẩm không tồn tại." });
+    // Kiểm tra xem đánh giá đã tồn tại chưa
+    const existingReview = await Review.findOne({ productId, userName });
+    if (existingReview) {
+      return res.status(400).json({ message: "You have already reviewed this product." });
     }
 
+    // Tạo đánh giá mới
     const newReview = new Review({
       productId,
-      userId,
-      rate,
+      userName,
       comment,
-      time: formatTime(),
+      rating
     });
-
     const savedReview = await newReview.save();
-    res.status(201).json(savedReview);
+
+    res.status(201).json({
+      message: "Review added successfully",
+      review: {
+        productId: savedReview.productId,
+        userName: savedReview.userName,
+        comment: savedReview.comment,
+        rating: savedReview.rating,
+        createdAt: savedReview.createdAt
+      }
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi thêm review." });
+    console.error(error);
+    res.status(500).json({ message: "Error adding review." });
   }
 });
 
-// Cập nhật review theo ID
-router.put("/update-review/:id", async (req, res) => {
-  const { id } = req.params;
-  const { rate, comment } = req.body;
 
-  try {
-    if (rate < 0 || rate > 5) {
-      return res.status(400).json({ message: "Số sao phải nằm trong khoảng từ 0 đến 5." });
-    }
-
-    const updatedReview = await Review.findByIdAndUpdate(
-      id,
-      { rate, comment, time: formatTime() },
-      { new: true }
-    );
-
-    if (!updatedReview) {
-      return res.status(404).json({ message: "Không tìm thấy review để cập nhật." });
-    }
-    res.status(200).json(updatedReview);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi cập nhật review." });
-  }
-});
-
-// Xóa review theo ID
+// Delete a review
 router.delete("/delete-review/:id", async (req, res) => {
   const { id } = req.params;
-
   try {
     const deletedReview = await Review.findByIdAndDelete(id);
     if (!deletedReview) {
-      return res.status(404).json({ message: "Không tìm thấy review để xóa." });
+      return res.status(404).json({ message: "Review not found." });
     }
-    res.status(200).json({ message: "Review đã được xóa." });
+    res.json({ message: "Review deleted successfully." });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi xóa review." });
+    console.error(error);
+    res.status(500).json({ message: "Error deleting review." });
   }
 });
 
