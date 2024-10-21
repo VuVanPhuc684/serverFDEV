@@ -12,6 +12,7 @@ const apiInvoiceDetail = require('./router/InvoiceDetailapi')
 const apiPayment = require('./router/Paymentapi');
 const apiProduct = require('./router/Productapi');
 const apiReview = require('./router/Reviewapi')
+const apiUser = require('./router/Userapi')
 
 app.use(express.json());
 app.use(logger('dev'));
@@ -24,6 +25,8 @@ app.use('/invoicedetail',apiInvoiceDetail)
 app.use('/payment',apiPayment)
 app.use('/product',apiProduct)
 app.use('/review',apiReview)
+app.use('/user',apiUser)
+
 
 // Gọi phương thức connect từ module ./config/db
 database.connect();

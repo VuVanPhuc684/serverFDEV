@@ -39,7 +39,7 @@ router.post("/", async (req, res) => {
     billingAddress,
     image
   });
-
+//
   await newPayment.save();
   return res.status(200).json({
     status: 200,

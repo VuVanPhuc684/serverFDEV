@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 
 const Cart = new mongoose.Schema(
   {
-    userEmail: {
+    userName: {
       type: String,
-      required: true,  // Email người dùng từ Firebase
+      required: true,  // Tên người dùng từ màn hình đăng ký
     },
     products: [
       {
