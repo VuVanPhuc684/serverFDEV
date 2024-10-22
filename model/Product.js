@@ -30,5 +30,3 @@ const Product = new mongoose.Schema(
 
 // Đăng ký model Product với Mongoose
 module.exports = mongoose.model("product", Product);
-
-

@@ -33,6 +33,3 @@ ReviewSchema.index({ productId: 1, userName: 1 }, { unique: true });
 
 const Review = mongoose.model("Review", ReviewSchema);
 module.exports = Review;
-
-
-

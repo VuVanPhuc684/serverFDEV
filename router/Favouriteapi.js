@@ -5,6 +5,7 @@ const Favourite = require("../model/Favourite");
 const Product = require("../model/Product");
 
 // Lấy danh sách các sản phẩm yêu thích
+// Lấy danh sách các sản phẩm yêu thích với thông tin sản phẩm đầy đủ
 router.get("/get-list-favourite", async (req, res) => {
   const { userName } = req.query;
   if (!userName) {
