@@ -1,5 +1,5 @@
-// models/Product.js
 const mongoose = require("mongoose");
+
 
 const Product = new mongoose.Schema(
   {
@@ -26,6 +26,7 @@ const Product = new mongoose.Schema(
     timestamps: true // Tự động tạo createdAt và updatedAt
   }
 );
+
 
 // Đăng ký model Product với Mongoose
 module.exports = mongoose.model("product", Product);
