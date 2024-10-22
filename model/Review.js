@@ -1,29 +1,32 @@
+// models/Review.js
 const mongoose = require("mongoose");
 
-// Hàm định dạng chỉ lấy giờ và ngày
-const formatTime = () => {
-  const currentDate = new Date();
-  return currentDate.toLocaleString("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false, // Hiển thị giờ theo định dạng 24h
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-};
-
-const Review = new mongoose.Schema(
-  {
-    productId: { type: String, required: true },
-    userId: { type: String, required: true },
-    rate: { type: Number, required: true },
-    comment: { type: String, required: true },
-    time: { type: String, default: formatTime }, // Định dạng thời gian khi lưu
+const ReviewSchema = new mongoose.Schema({
+  productId: {
+    type: mongoose.Schema.Types.ObjectId, // Reference to Product model
+    ref: 'product',
+    required: true
   },
-  {
-    timestamps: true, // Tự động thêm createdAt và updatedAt
+  userName: {
+    type: String,
+    required: true, // userName is fetched and validated via Firebase auth middleware
+  },
+  comment: {
+    type: String,
+    required: true
+  },
+  rating: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5
   }
-);
+}, {
+  timestamps: true // Automatically manage createdAt and updatedAt
+});
 
-module.exports = mongoose.model("review", Review);
+// Ensuring a unique review per product per user
+ReviewSchema.index({ productId: 1, userName: 1 }, { unique: true });
+
+const Review = mongoose.model("Review", ReviewSchema);
+module.exports = Review;
